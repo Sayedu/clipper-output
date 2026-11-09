@@ -1,0 +1,35 @@
+name: Deploy to Pages
+
+# Replaces the old branch-build (legacy Jekyll) Pages pipeline, which proved
+# unreliable for this repo -- build times ranged from ~23s to 4+ minutes with
+# no visible progress in between, occasionally exceeding the daily poster's
+# deploy-wait timeout outright. An Actions-based deploy runs as a normal job
+# instead of queuing on GitHub's shared legacy build worker, so it's fast and
+# gives a real pass/fail signal.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  pages: write
+  id-token: write
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - id: deployment
+        uses: actions/deploy-pages@v4
